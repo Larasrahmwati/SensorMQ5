@@ -1,0 +1,73 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+#define buzzerPin 7
+#define trigPin 6
+#define echoPin 5
+#define redPin 2
+#define photoresistorPin A1
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(redPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(photoresistorPin, INPUT);
+  Serial.begin(9600);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Jarak:     cm");
+  lcd.setCursor(0, 1);
+  lcd.print("Status: ");
+}
+
+void loop() {
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long waktu, jarak;
+  waktu = pulseIn(echoPin, HIGH);
+  jarak = (waktu * 0.0343) / 2;
+
+  Serial.print(jarak);
+  Serial.println("cm");
+
+  lcd.setCursor(7, 0);
+  lcd.print("    ");
+  lcd.setCursor(7, 0);
+  lcd.print(jarak);
+
+  int photoresistorValue = analogRead(photoresistorPin);
+  Serial.print("Photoresistor: ");
+  Serial.println(photoresistorValue);
+
+  lcd.setCursor(0, 1);
+  lcd.print("Light: ");
+  lcd.print(photoresistorValue);
+
+  digitalWrite(redPin, LOW);
+  noTone(buzzerPin);
+
+  if (jarak >= 20 && jarak <= 30) {
+    lcd.setCursor(0, 1);
+    lcd.print(" gas tidak bocor  ");
+    tone(buzzerPin, 1000);
+    delay(300);
+    noTone(buzzerPin);
+    delay(300);
+  } else if (jarak >= 0 && jarak <= 10) {
+    digitalWrite(redPin, HIGH);
+    lcd.setCursor(0, 1);
+    lcd.print("kebocoran gas");
+    tone(buzzerPin, 3000);
+  }
+  delay(100);
+}
